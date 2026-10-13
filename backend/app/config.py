@@ -3,7 +3,6 @@ from pathlib import Path
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from sqlalchemy import create_engine, text
 from sqlalchemy.engine import URL
 
 
@@ -58,35 +57,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-
-
-def ensure_postgres_database_exists() -> None:
-    """
-    Проверяет, существует ли база из settings.postgres_db.
-    Если нет — создаёт её.
-
-    Подключаемся к служебной базе 'postgres', потому что
-    создавать новую базу нужно не изнутри самой целевой базы.
-    """
-
-    engine = create_engine(
-        settings.admin_database_url,
-        isolation_level="AUTOCOMMIT",
-        pool_pre_ping=True,
-        future=True,
-    )
-
-    try:
-        with engine.connect() as conn:
-            result = conn.execute(
-                text("SELECT 1 FROM pg_database WHERE datname = :db"),
-                {"db": settings.postgres_db},
-            )
-
-            database_exists = result.scalar() == 1
-
-            if not database_exists:
-                safe_db_name = settings.postgres_db.replace('"', '""')
-                conn.execute(text(f'CREATE DATABASE "{safe_db_name}"'))
-    finally:
-        engine.dispose()
