@@ -1,0 +1,20 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Local database
+backend/app.db
+
+# Env
+.env
+
+# IDE
+.idea/
+.vscode/
+
+# Frontend / E2E later
+node_modules/
+playwright-report/
+test-results/
