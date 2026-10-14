@@ -8,10 +8,14 @@ pytestmark = [pytest.mark.api, pytest.mark.boundary]
 def create_10_expenses(client, auth_headers, payload_factory):
     """
     Создаёт 10 расходов с title "Expense 1".."Expense 10".
+    
+    Возвращает список созданных записей (ответы от API).
     """
 
+    created = []
+    
     for i in range(1, 11):
-        client.post(
+        response = client.post(
             "/api/expenses",
             json=payload_factory(
                 title=f"Expense {i}",
@@ -19,6 +23,10 @@ def create_10_expenses(client, auth_headers, payload_factory):
             ),
             headers=auth_headers,
         )
+        
+        created.append(response.json())
+    
+    return created
 
 
 def test_default_limit_returns_all_when_few_items(
@@ -33,7 +41,15 @@ def test_default_limit_returns_all_when_few_items(
     response = client.get("/api/expenses", headers=auth_headers)
 
     assert response.status_code == 200
-    assert len(response.json()) == 10
+    
+    items = response.json()
+    assert len(items) == 10
+    
+    # Проверяем, что вернулись именно созданные записи
+    created_ids = {item["id"] for item in create_10_expenses}
+    returned_ids = {item["id"] for item in items}
+    
+    assert created_ids == returned_ids
 
 
 def test_limit_1_returns_one_item(
@@ -51,7 +67,13 @@ def test_limit_1_returns_one_item(
     )
 
     assert response.status_code == 200
-    assert len(response.json()) == 1
+    
+    items = response.json()
+    assert len(items) == 1
+    
+    # Из-за сортировки desc первой будет последняя созданная запись
+    assert items[0]["title"] == "Expense 10"
+    assert items[0]["id"] == create_10_expenses[-1]["id"]
 
 
 def test_limit_0_returns_empty_list(
@@ -87,7 +109,15 @@ def test_limit_1000_is_maximum_valid_value(
     )
 
     assert response.status_code == 200
-    assert len(response.json()) == 10
+    
+    items = response.json()
+    assert len(items) == 10
+    
+    # Проверяем, что все созданные записи вернулись
+    created_ids = {item["id"] for item in create_10_expenses}
+    returned_ids = {item["id"] for item in items}
+    
+    assert created_ids == returned_ids
 
 
 def test_limit_1001_returns_422(
@@ -96,6 +126,8 @@ def test_limit_1001_returns_422(
 ):
     """
     BVA: лимит > 1000 — невалидное значение, должно вернуть 422.
+    
+    Фикстура не нужна, потому что запрос не доходит до создания данных.
     """
 
     response = client.get(
@@ -112,6 +144,8 @@ def test_limit_negative_returns_422(
 ):
     """
     BVA: отрицательный лимит — невалидное значение.
+    
+    Фикстура не нужна, потому что запрос не доходит до создания данных.
     """
 
     response = client.get(
@@ -137,7 +171,16 @@ def test_offset_0_returns_from_beginning(
     )
 
     assert response.status_code == 200
-    assert len(response.json()) == 5
+    
+    items = response.json()
+    assert len(items) == 5
+    
+    # Из-за сортировки desc offset=0 это последние 5 созданных записей
+    assert items[0]["title"] == "Expense 10"
+    assert items[1]["title"] == "Expense 9"
+    assert items[2]["title"] == "Expense 8"
+    assert items[3]["title"] == "Expense 7"
+    assert items[4]["title"] == "Expense 6"
 
 
 def test_offset_beyond_data_returns_empty(
@@ -164,6 +207,8 @@ def test_offset_negative_returns_422(
 ):
     """
     BVA: отрицательный offset — невалидное значение.
+    
+    Фикстура не нужна, потому что запрос не доходит до создания данных.
     """
 
     response = client.get(
@@ -195,6 +240,10 @@ def test_items_sorted_by_id_desc(
     # Первая запись должна быть "Expense 10", последняя — "Expense 1"
     assert items[0]["title"] == "Expense 10"
     assert items[-1]["title"] == "Expense 1"
+    
+    # Проверяем, что ID соответствуют созданным записям
+    assert items[0]["id"] == create_10_expenses[-1]["id"]  # последняя созданная
+    assert items[-1]["id"] == create_10_expenses[0]["id"]  # первая созданная
 
 
 def test_pagination_with_limit_and_offset(
@@ -217,6 +266,18 @@ def test_pagination_with_limit_and_offset(
     items = response.json()
     assert len(items) == 5
 
-    # Из-за сортировки desc: offset=2 это "Expense 8", "Expense 7", ...
+    # Из-за сортировки desc:
+    # offset=0: Expense 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
+    # offset=2: Expense 8, 7, 6, 5, 4
+    
     assert items[0]["title"] == "Expense 8"
-    assert items[-1]["title"] == "Expense 4"
+    assert items[1]["title"] == "Expense 7"
+    assert items[2]["title"] == "Expense 6"
+    assert items[3]["title"] == "Expense 5"
+    assert items[4]["title"] == "Expense 4"
+    
+    # Проверяем, что вернулись именно созданные записи
+    returned_ids = {item["id"] for item in items}
+    created_ids = {item["id"] for item in create_10_expenses}
+    
+    assert returned_ids.issubset(created_ids)
