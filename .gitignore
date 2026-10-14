@@ -18,3 +18,7 @@ g
 node_modules/
 playwright-report/
 test-results/
+
+.coverage
+htmlcov/
+.coverage.*
