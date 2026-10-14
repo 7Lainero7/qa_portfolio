@@ -76,22 +76,16 @@ def test_limit_1_returns_one_item(
     assert items[0]["id"] == create_10_expenses[-1]["id"]
 
 
-def test_limit_0_returns_empty_list(
-    client,
-    auth_headers,
-    create_10_expenses,
+def test_limit_0_returns_422(
+        client,
+        auth_headers
 ):
     """
-    BVA: лимит = 0 — граничное значение.
+    BVA: лимит = 0 — невалидное значение.
+    Запрос пустого списка не имеет практического смысла.
     """
-
-    response = client.get(
-        "/api/expenses?limit=0",
-        headers=auth_headers,
-    )
-
-    assert response.status_code == 200
-    assert len(response.json()) == 0
+    response = client.get("/api/expenses?limit=0", headers=auth_headers)
+    assert response.status_code == 422
 
 
 def test_limit_1000_is_maximum_valid_value(
