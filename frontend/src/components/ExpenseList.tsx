@@ -1,89 +1,65 @@
-import React, { useState } from 'react';
-import { createExpense } from '../api';
-import { CreateExpensePayload } from '../types';
+import React from 'react';
+import { Expense } from '../types';
+import { deleteExpense } from '../api';
 
 interface Props {
-    onExpenseAdded: () => void;
+  expenses: Expense[];
+  onExpenseDeleted: () => void;
 }
 
-export const ExpenseForm: React.FC<Props> = ({ onExpenseAdded }) => {
-    const [title, setTitle] = useState('');
-    const [amount, setAmount] = useState('');
-    const [category, setCategory] = useState('');
-    const [loading, setLoading] = useState(false);
+export const ExpenseList: React.FC<Props> = ({ expenses, onExpenseDeleted }) => {
+  // Сортировка по убыванию id (новые сверху)
+  const sortedExpenses = [...expenses].sort((a, b) => b.id - a.id);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteExpense(id);
+      onExpenseDeleted();
+    } catch (err) {
+      console.error('Failed to delete expense', err);
+    }
+  };
 
-        // Клиентская валидация
-        if (!title.trim()) {
-            alert('Title не может быть пустым');
-            return;
-        }
-        const amountNum = Number(amount);
-        if (isNaN(amountNum) || amountNum <= 0) {
-            alert('Amount должен быть больше 0');
-            return;
-        }
+  const formatRubles = (cents: number) => {
+    return `${(cents / 100).toFixed(2)} ₽`;
+  };
 
-        setLoading(true);
-        try {
-            const payload: CreateExpensePayload = {
-                title: title.trim(),
-                amount_cents: amountNum,
-                category: category.trim() || 'other',
-            };
-            await createExpense(payload);
-            setTitle('');
-            setAmount('');
-            setCategory('');
-            onExpenseAdded();
-        } catch (err) {
-            // Ошибка уже обработана в api.ts (alert)
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const inputStyle = { margin: '5px', padding: '8px', fontSize: '14px' };
-
-    return (
-        <form onSubmit={handleSubmit} style={{ marginBottom: '20px', padding: '15px', border: '1px solid #ccc' }}>
-            <div>
-                <input
-                    data-testid="title-input"
-                    type="text"
-                    placeholder="Title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    style={inputStyle}
-                />
-                <input
-                    data-testid="amount-input"
-                    type="number"
-                    placeholder="Amount (cents)"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    style={inputStyle}
-                />
-                <input
-                    data-testid="category-input"
-                    type="text"
-                    placeholder="Category (optional)"
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    style={inputStyle}
-                />
-                <button
-                    data-testid="add-button"
-                    type="submit"
-                    disabled={loading}
-                    style={{ ...inputStyle, cursor: loading ? 'not-allowed' : 'pointer' }}
-                >
-                    {loading ? 'Adding...' : 'Add'}
-                </button>
-            </div>
-        </form>
-    );
+  return (
+    <div data-testid="expense-list" style={{ border: '1px solid #ccc', padding: '15px' }}>
+      {sortedExpenses.length === 0 ? (
+        <p>Нет расходов</p>
+      ) : (
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ borderBottom: '2px solid #000' }}>
+              <th style={{ textAlign: 'left', padding: '8px' }}>ID</th>
+              <th style={{ textAlign: 'left', padding: '8px' }}>Title</th>
+              <th style={{ textAlign: 'left', padding: '8px' }}>Amount</th>
+              <th style={{ textAlign: 'left', padding: '8px' }}>Category</th>
+              <th style={{ textAlign: 'left', padding: '8px' }}>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sortedExpenses.map((expense) => (
+              <tr key={expense.id} data-testid="expense-row" style={{ borderBottom: '1px solid #eee' }}>
+                <td style={{ padding: '8px' }}>{expense.id}</td>
+                <td style={{ padding: '8px' }}>{expense.title}</td>
+                <td style={{ padding: '8px' }}>{formatRubles(expense.amount_cents)}</td>
+                <td style={{ padding: '8px' }}>{expense.category}</td>
+                <td style={{ padding: '8px' }}>
+                  <button
+                    data-testid="delete-button"
+                    onClick={() => handleDelete(expense.id)}
+                    style={{ color: 'red', cursor: 'pointer', padding: '4px 8px' }}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
 };

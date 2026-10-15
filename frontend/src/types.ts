@@ -1,4 +1,4 @@
-export interface Expense {
+interface Expense {
   id: number;
   title: string;
   amount_cents: number;
@@ -6,8 +6,10 @@ export interface Expense {
   created_at: string;
 }
 
-export interface CreateExpensePayload {
+interface CreateExpensePayload {
   title: string;
   amount_cents: number;
   category?: string;
 }
+
+export type { Expense, CreateExpensePayload };
