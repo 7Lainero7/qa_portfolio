@@ -33,10 +33,14 @@ export class ExpensesPage {
     }
 
     await this.addButton.click();
+
+    // 🔥 КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Ждем, пока строка с этим заголовком реально появится в DOM.
+    // Это синхронизирует скорость Playwright со скоростью обновления React.
+    await this.expectExpenseVisible(title);
   }
 
-  async getExpenseTitles(): Promise<string[]> {
-    return this.expenseRows.locator('[data-testid="expense-title"]').allTextContents();
+  async getRowsTextContents(): Promise<string[]> {
+    return this.expenseRows.allTextContents();
   }
 
   async countExpenses(): Promise<number> {
@@ -46,6 +50,9 @@ export class ExpensesPage {
   async deleteExpenseByTitle(title: string) {
     const row = this.expenseRows.filter({ hasText: title });
     await row.getByTestId("delete-button").click();
+
+    // То же самое для удаления: ждем, пока строка исчезнет
+    await this.expectExpenseNotVisible(title);
   }
 
   async expectExpenseVisible(title: string) {
