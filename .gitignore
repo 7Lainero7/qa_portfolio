@@ -14,7 +14,7 @@ backend/app.db
 .idea/
 .vscode/
 g
-# Frontend / E2E later
+# Frontend / E2E 
 node_modules/
 playwright-report/
 test-results/
