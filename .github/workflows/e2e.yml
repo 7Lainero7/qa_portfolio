@@ -44,7 +44,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 1. Поднимаем Backend (он нужен фронтенду для API)
+      # 1. Поднимаем Backend
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -67,17 +67,23 @@ jobs:
           API_KEY: test-key
         run: |
           cd backend
-          # Запускаем в фоне, чтобы шаг не блокировался
           nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 > backend.log 2>&1 &
-          sleep 3 # Даём время на инициализацию БД и старт сервера
+          sleep 3
 
-      # 2. Поднимаем Frontend и Playwright
+      # 2. Поднимаем Frontend и E2E
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
-          cache-dependency-path: e2e/package.json
+          cache-dependency-path: |
+            frontend/package.json
+            e2e/package.json
+
+      - name: Install Frontend dependencies
+        run: |
+          cd frontend
+          npm ci
 
       - name: Install E2E dependencies
         run: |
@@ -92,7 +98,6 @@ jobs:
           cd e2e
           npx playwright test
 
-      # 3. Сохраняем артефакты при падении (опционально, но полезно)
       - name: Upload Playwright Report
         if: failure()
         uses: actions/upload-artifact@v4
