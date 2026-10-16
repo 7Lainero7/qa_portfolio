@@ -106,29 +106,3 @@ def delete_expense(
     db.commit()
 
     return True
-
-
-def expense_exists(
-    db: Session,
-    expense_id: int,
-) -> bool:
-    """
-    Проверяет, существует ли расход с таким id.
-    """
-
-    result = (
-        db.query(models.Expense.id)
-        .filter(models.Expense.id == expense_id)
-        .first()
-    )
-
-    return result is not None
-
-
-def count_expenses(db: Session) -> int:
-    """
-    Возвращает количество расходов.
-    Пригодится в тестах и в data-QA.
-    """
-
-    return db.query(models.Expense).count()
