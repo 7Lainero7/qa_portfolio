@@ -181,3 +181,17 @@ def test_delete_expense(client, auth_headers, payload_factory):
     )
 
     assert get_response.status_code == 404
+
+
+@pytest.mark.api
+def test_patch_with_empty_body_returns_200_no_op(client, auth_headers, payload_factory):
+    create_response = client.post("/api/expenses", json=payload_factory(), headers=auth_headers)
+    expense_id = create_response.json()["id"]
+
+    # Пустой PATCH должен вернуть 200 и не изменить данные
+    response = client.patch(f"/api/expenses/{expense_id}", json={}, headers=auth_headers)
+    assert response.status_code == 200
+    
+    # Проверяем, что данные не изменились
+    get_response = client.get(f"/api/expenses/{expense_id}", headers=auth_headers)
+    assert get_response.json()["title"] == "Coffee"

@@ -30,7 +30,7 @@ export const ExpenseForm: React.FC<Props> = ({ onExpenseAdded }) => {
         try {
             const payload: CreateExpensePayload = {
                 title: title.trim(),
-                amount_cents: amountNum,
+                amount_cents: Math.round(parseFloat(amount) *100),
                 category: category.trim() || 'other',
             };
             await createExpense(payload);

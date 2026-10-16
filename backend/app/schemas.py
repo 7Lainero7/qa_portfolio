@@ -4,6 +4,9 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
+MAX_AMOUNT_CENTS = 100_000_000
+
+
 class ExpenseBase(BaseModel):
     title: str = Field(
         ...,
@@ -14,7 +17,7 @@ class ExpenseBase(BaseModel):
     amount_cents: int = Field(
         ...,
         gt=0,
-        le=100_000_000,
+        le=MAX_AMOUNT_CENTS,
     )
 
     category: Optional[str] = Field(
@@ -68,7 +71,7 @@ class ExpenseRead(ExpenseBase):
 
 class ExpenseUpdate(BaseModel):
     title: Optional[str] = Field(default=None, min_length=1, max_length=50)
-    amount_cents: Optional[int] = Field(default=None, gt=0, le=100_000_000)
+    amount_cents: Optional[int] = Field(default=None, gt=0, le=MAX_AMOUNT_CENTS)
     category: Optional[str] = Field(default=None, max_length=30)
 
     @field_validator("title")

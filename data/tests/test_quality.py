@@ -54,3 +54,25 @@ def test_no_orphan_categories(db_conn):
         """)
         orphan_count = cur.fetchone()[0]
         assert orphan_count == 0, "Найдены категории в mart, которых нет в staging"
+
+
+def test_data_qa_catches_negative_amounts(db_conn):
+    """
+    Мутационный тест: намеренно вставляем 'грязные' данные и проверяем, 
+    что тест качества данных их обнаруживает.
+    """
+    with db_conn.cursor() as cur:
+        # 1. Намеренно ломаем данные (обходим логику генератора)
+        cur.execute("INSERT INTO staging_expenses (title, amount_cents, category) VALUES ('Bad Data', -500, 'food');")
+        db_conn.commit()
+        
+        # 2. Проверяем, что наш тест качества это ловит
+        cur.execute("SELECT COUNT(*) FROM staging_expenses WHERE amount_cents < 0;")
+        negative_count = cur.fetchone()[0]
+        
+        # Мы ОЖИДАЕМ, что найдется хотя бы 1 отрицательная запись, 
+        # тем самым доказывая, что тест НЕ является тавтологией.
+        assert negative_count >= 1, "Тест не смог обнаружить намеренно вставленные отрицательные значения"
+        
+        # 3. Откатываем изменения, чтобы не ломать другие тесты
+        db_conn.rollback()

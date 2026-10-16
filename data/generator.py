@@ -4,11 +4,18 @@ from dotenv import load_dotenv
 import psycopg
 from faker import Faker
 
-# Загружаем переменные из backend/.env (чтобы использовать те же настройки БД)
+
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 load_dotenv(BACKEND_ROOT / "backend" / ".env")
 
-DB_URL = f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DB')}"
+user = os.getenv("POSTGRES_USER", "postgres")
+password = os.getenv("POSTGRES_PASSWORD", "postgres")
+host = os.getenv("POSTGRES_HOST", "localhost")
+port = os.getenv("POSTGRES_PORT", "5432")
+db = os.getenv("POSTGRES_DB", "qa_portfolio")
+
+DB_URL = f"postgresql://{user}:{password}@{host}:{port}/{db}"
+print(f"Подключение к БД: {host}:{port}/{db}")
 
 fake = Faker('ru_RU')
 CATEGORIES = ["food", "transport", "entertainment", "utilities", "other"]

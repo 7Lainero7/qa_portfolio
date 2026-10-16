@@ -1,17 +1,12 @@
 import os
-
-os.environ["POSTGRES_DB"] = "qa_portfolio_test"
-
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import text
 
-from app.database import (
-    Base,
-    SessionLocal,
-    engine,
-    ensure_postgres_database_exists,
-)
+os.environ["POSTGRES_DB"] = "qa_portfolio_test"
+
+from app.config import settings
+from app.database import Base, engine, ensure_postgres_database_exists, SessionLocal
 from app.main import app
 
 
@@ -19,14 +14,11 @@ from app.main import app
 def prepare_test_database():
     """
     Готовит тестовую базу один раз на всю сессию тестов.
-
     1. Создаёт базу, если её нет.
     2. Создаёт таблицы.
     """
-
     ensure_postgres_database_exists()
     Base.metadata.create_all(bind=engine)
-
     yield
 
 
@@ -34,18 +26,13 @@ def prepare_test_database():
 def clean_expenses():
     """
     Очищает таблицу expenses после каждого теста.
-
     Так тесты не влияют друг на друга.
     """
-
     yield
 
     session = SessionLocal()
-
     try:
-        session.execute(
-            text("TRUNCATE TABLE expenses RESTART IDENTITY CASCADE")
-        )
+        session.execute(text("TRUNCATE TABLE expenses RESTART IDENTITY CASCADE"))
         session.commit()
     finally:
         session.close()
@@ -56,7 +43,6 @@ def client():
     """
     Клиент для тестирования FastAPI приложения.
     """
-
     return TestClient(app)
 
 
@@ -64,9 +50,9 @@ def client():
 def auth_headers():
     """
     Заголовок авторизации для защищённых эндпоинтов.
+    ВАЖНО: Берем ключ из настроек, а не хардкодим, чтобы тесты не падали при смене API_KEY в .env
     """
-
-    return {"X-API-Key": "test-key"}
+    return {"X-API-Key": settings.api_key}
 
 
 @pytest.fixture()
@@ -74,7 +60,6 @@ def payload_factory():
     """
     Фабрика полезных тел запросов.
     """
-
     def _make(**overrides):
         payload = {
             "title": "Coffee",

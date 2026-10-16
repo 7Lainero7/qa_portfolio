@@ -5,7 +5,6 @@ pytestmark = [pytest.mark.negative, ]
 
 
 @pytest.mark.api
-@pytest.mark.boundary
 def test_create_expense_without_api_key_returns_401(client, payload_factory):
     response = client.post(
         "/api/expenses",
@@ -16,7 +15,6 @@ def test_create_expense_without_api_key_returns_401(client, payload_factory):
 
 
 @pytest.mark.api
-@pytest.mark.boundary
 def test_create_expense_with_invalid_api_key_returns_401(client, payload_factory):
     response = client.post(
         "/api/expenses",
@@ -28,7 +26,6 @@ def test_create_expense_with_invalid_api_key_returns_401(client, payload_factory
 
 
 @pytest.mark.api
-@pytest.mark.boundary
 def test_get_expenses_without_api_key_returns_401(client):
     response = client.get("/api/expenses")
 
@@ -36,7 +33,6 @@ def test_get_expenses_without_api_key_returns_401(client):
 
 
 @pytest.mark.api
-@pytest.mark.boundary
 def test_health_without_api_key_returns_200(client):
     """
     /health — публичный эндпоинт, должен работать без ключа.
