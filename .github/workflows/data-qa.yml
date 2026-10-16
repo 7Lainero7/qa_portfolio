@@ -1,0 +1,67 @@
+name: Data QA CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - "data/**"
+      - ".github/workflows/data-qa.yml"
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - "data/**"
+      - ".github/workflows/data-qa.yml"
+
+jobs:
+  data-qa:
+    name: Data Quality Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: qa_portfolio
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: data/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          cd data
+          pip install -r requirements.txt
+
+      - name: Run Data QA tests
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: qa_portfolio
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        run: |
+          cd data
+          # Сначала генерируем данные и делаем "миграцию"
+          python generator.py
+          # Затем запускаем тесты качества
+          pytest tests/ -v -m data_qa --tb=short
