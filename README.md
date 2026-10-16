@@ -32,8 +32,7 @@ qa-portfolio/
 │   ├── generator.py  # Генератор данных
 │   └── tests/        # Тесты качества данных
 ├── docs/             # Документация (тест-кейсы, баг-репорты)
-├── .github/          # GitHub Actions workflows
-└── .gitlab-ci.yml    # GitLab CI (зеркало для E-soft)
+└──  .github/          # GitHub Actions workflows
 ```
 
 ## Технологический стек
@@ -49,9 +48,7 @@ qa-portfolio/
 - GitLab CI (зеркало)
 
 ### В планах
-- Playwright + TypeScript (UI E2E)
-- Docker Compose (инфраструктура)
-- Faker (генерация данных)
+- Добавление Alembic для миграций БД
 
 ## Быстрый старт
 
