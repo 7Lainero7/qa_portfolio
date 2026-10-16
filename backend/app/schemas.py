@@ -75,7 +75,7 @@ class ExpenseUpdate(BaseModel):
     @classmethod
     def validate_update_title(cls, value: Optional[str]) -> Optional[str]:
         if value is None:
-            return None
+            return None  # Поле не передано, это ок для PATCH
         value = value.strip()
         if not value:
             raise ValueError("title must not be blank")
@@ -85,8 +85,6 @@ class ExpenseUpdate(BaseModel):
     @classmethod
     def validate_update_category(cls, value: Optional[str]) -> Optional[str]:
         if value is None:
-            return None
+            raise ValueError("category cannot be null in PATCH request") # ← Блокируем 500 ошибку
         value = value.strip()
-        if not value:
-            return "other"
-        return value
+        return value if value else "other"

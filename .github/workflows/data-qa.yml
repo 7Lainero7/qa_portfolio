@@ -61,7 +61,5 @@ jobs:
           POSTGRES_PASSWORD: postgres
         run: |
           cd data
-          # Сначала генерируем данные и делаем "миграцию"
-          python generator.py
-          # Затем запускаем тесты качества
+          # Генератор запустится автоматически благодаря autouse=True фикстуре в conftest.py
           pytest tests/ -v -m data_qa --tb=short
