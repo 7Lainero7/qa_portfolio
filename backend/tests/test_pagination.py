@@ -1,8 +1,6 @@
 import pytest
 
 
-@pytest.mark.api
-@pytest.mark.boundary
 @pytest.fixture()
 def create_10_expenses(client, auth_headers, payload_factory):
     """
