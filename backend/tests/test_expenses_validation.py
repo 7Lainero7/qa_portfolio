@@ -1,9 +1,7 @@
 import pytest
 
 
-pytestmark = pytest.mark.api
-
-
+@pytest.mark.api
 @pytest.mark.negative
 @pytest.mark.parametrize(
     "missing_field",
@@ -26,7 +24,7 @@ def test_missing_required_field_returns_422(
 
     assert response.status_code == 422
 
-
+@pytest.mark.api
 @pytest.mark.negative
 def test_invalid_amount_type_returns_422(client, auth_headers, payload_factory):
     payload = payload_factory(amount_cents="not-a-number")
@@ -40,6 +38,7 @@ def test_invalid_amount_type_returns_422(client, auth_headers, payload_factory):
     assert response.status_code == 422
 
 
+@pytest.mark.api
 @pytest.mark.boundary
 @pytest.mark.parametrize(
     "title",
@@ -58,6 +57,7 @@ def test_title_valid_boundaries(client, auth_headers, payload_factory, title):
     assert response.status_code == 201
 
 
+@pytest.mark.api
 @pytest.mark.boundary
 @pytest.mark.parametrize(
     "title",
@@ -76,6 +76,7 @@ def test_title_invalid_boundaries(client, auth_headers, payload_factory, title):
     assert response.status_code == 422
 
 
+@pytest.mark.api
 @pytest.mark.boundary
 @pytest.mark.parametrize(
     "amount_cents",
@@ -99,6 +100,7 @@ def test_amount_valid_boundaries(
     assert response.status_code == 201
 
 
+@pytest.mark.api
 @pytest.mark.boundary
 @pytest.mark.parametrize(
     "amount_cents",

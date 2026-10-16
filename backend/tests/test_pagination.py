@@ -1,9 +1,8 @@
 import pytest
 
 
-pytestmark = [pytest.mark.api, pytest.mark.boundary]
-
-
+@pytest.mark.api
+@pytest.mark.boundary
 @pytest.fixture()
 def create_10_expenses(client, auth_headers, payload_factory):
     """
@@ -29,6 +28,8 @@ def create_10_expenses(client, auth_headers, payload_factory):
     return created
 
 
+@pytest.mark.api
+@pytest.mark.boundary
 def test_default_limit_returns_all_when_few_items(
     client,
     auth_headers,
@@ -52,6 +53,8 @@ def test_default_limit_returns_all_when_few_items(
     assert created_ids == returned_ids
 
 
+@pytest.mark.api
+@pytest.mark.boundary
 def test_limit_1_returns_one_item(
     client,
     auth_headers,
@@ -76,6 +79,8 @@ def test_limit_1_returns_one_item(
     assert items[0]["id"] == create_10_expenses[-1]["id"]
 
 
+@pytest.mark.api
+@pytest.mark.boundary
 def test_limit_0_returns_422(
         client,
         auth_headers
@@ -88,6 +93,8 @@ def test_limit_0_returns_422(
     assert response.status_code == 422
 
 
+@pytest.mark.api
+@pytest.mark.boundary
 def test_limit_1000_is_maximum_valid_value(
     client,
     auth_headers,
@@ -114,6 +121,8 @@ def test_limit_1000_is_maximum_valid_value(
     assert created_ids == returned_ids
 
 
+@pytest.mark.api
+@pytest.mark.boundary
 def test_limit_1001_returns_422(
     client,
     auth_headers,
@@ -132,6 +141,8 @@ def test_limit_1001_returns_422(
     assert response.status_code == 422
 
 
+@pytest.mark.api
+@pytest.mark.boundary
 def test_limit_negative_returns_422(
     client,
     auth_headers,
@@ -150,6 +161,8 @@ def test_limit_negative_returns_422(
     assert response.status_code == 422
 
 
+@pytest.mark.api
+@pytest.mark.boundary
 def test_offset_0_returns_from_beginning(
     client,
     auth_headers,
@@ -177,6 +190,8 @@ def test_offset_0_returns_from_beginning(
     assert items[4]["title"] == "Expense 6"
 
 
+@pytest.mark.api
+@pytest.mark.boundary
 def test_offset_beyond_data_returns_empty(
     client,
     auth_headers,
@@ -195,6 +210,8 @@ def test_offset_beyond_data_returns_empty(
     assert len(response.json()) == 0
 
 
+@pytest.mark.api
+@pytest.mark.boundary
 def test_offset_negative_returns_422(
     client,
     auth_headers,
@@ -213,6 +230,8 @@ def test_offset_negative_returns_422(
     assert response.status_code == 422
 
 
+@pytest.mark.api
+@pytest.mark.boundary
 def test_items_sorted_by_id_desc(
     client,
     auth_headers,
@@ -240,6 +259,8 @@ def test_items_sorted_by_id_desc(
     assert items[-1]["id"] == create_10_expenses[0]["id"]  # первая созданная
 
 
+@pytest.mark.api
+@pytest.mark.boundary
 def test_pagination_with_limit_and_offset(
     client,
     auth_headers,

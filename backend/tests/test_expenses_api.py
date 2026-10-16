@@ -1,9 +1,7 @@
 import pytest
 
 
-pytestmark = pytest.mark.api
-
-
+@pytest.mark.api
 @pytest.mark.smoke
 def test_create_expense_returns_201(client, auth_headers, payload_factory):
     payload = payload_factory(
@@ -28,6 +26,7 @@ def test_create_expense_returns_201(client, auth_headers, payload_factory):
     assert "created_at" in body
 
 
+@pytest.mark.api
 @pytest.mark.smoke
 def test_create_expense_without_category_uses_default(
     client,
@@ -47,6 +46,7 @@ def test_create_expense_without_category_uses_default(
     assert response.json()["category"] == "other"
 
 
+@pytest.mark.api
 @pytest.mark.smoke
 def test_get_created_expense(client, auth_headers, payload_factory):
     payload = payload_factory(title="Taxi")
@@ -69,6 +69,7 @@ def test_get_created_expense(client, auth_headers, payload_factory):
     assert response.json()["title"] == "Taxi"
 
 
+@pytest.mark.api
 @pytest.mark.smoke
 def test_list_expenses_contains_created_item(
     client,
@@ -95,6 +96,7 @@ def test_list_expenses_contains_created_item(
     assert "Groceries" in titles
 
 
+@pytest.mark.api
 @pytest.mark.negative
 def test_get_missing_expense_returns_404(client, auth_headers):
     response = client.get(
@@ -106,6 +108,7 @@ def test_get_missing_expense_returns_404(client, auth_headers):
     assert response.json()["detail"] == "Expense not found"
 
 
+@pytest.mark.api
 @pytest.mark.negative
 def test_patch_missing_expense_returns_404(client, auth_headers):
     response = client.patch(
@@ -117,6 +120,7 @@ def test_patch_missing_expense_returns_404(client, auth_headers):
     assert response.status_code == 404
 
 
+@pytest.mark.api
 @pytest.mark.negative
 def test_delete_missing_expense_returns_404(client, auth_headers):
     response = client.delete(
@@ -127,6 +131,7 @@ def test_delete_missing_expense_returns_404(client, auth_headers):
     assert response.status_code == 404
 
 
+@pytest.mark.api
 @pytest.mark.smoke
 def test_update_expense(client, auth_headers, payload_factory):
     payload = payload_factory(title="Old", amount_cents=1000)
@@ -150,6 +155,7 @@ def test_update_expense(client, auth_headers, payload_factory):
     assert update_response.json()["amount_cents"] == 2000
 
 
+@pytest.mark.api
 @pytest.mark.smoke
 def test_delete_expense(client, auth_headers, payload_factory):
     payload = payload_factory(title="To delete")
