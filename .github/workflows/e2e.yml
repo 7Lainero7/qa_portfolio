@@ -57,7 +57,7 @@ jobs:
           cd backend
           pip install -r requirements.txt
 
-            - name: Start Backend
+      - name: Start Backend
         env:
           POSTGRES_HOST: localhost
           POSTGRES_PORT: 5432
@@ -69,7 +69,6 @@ jobs:
           cd backend
           nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 > backend.log 2>&1 &
           
-          # Ждём, пока backend действительно ответит на /health
           echo "Waiting for backend to be ready..."
           for i in {1..15}; do
             if curl -s http://localhost:8000/health | grep -q "ok"; then
