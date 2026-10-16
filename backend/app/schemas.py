@@ -67,45 +67,26 @@ class ExpenseRead(ExpenseBase):
 
 
 class ExpenseUpdate(BaseModel):
-    title: Optional[str] = Field(
-        default=None,
-        min_length=1,
-        max_length=50,
-    )
-
-    amount_cents: Optional[int] = Field(
-        default=None,
-        gt=0,
-        le=100_000_000,
-    )
-
-    category: Optional[str] = Field(
-        default=None,
-        max_length=30,
-    )
+    title: Optional[str] = Field(default=None, min_length=1, max_length=50)
+    amount_cents: Optional[int] = Field(default=None, gt=0, le=100_000_000)
+    category: Optional[str] = Field(default=None, max_length=30)
 
     @field_validator("title")
     @classmethod
     def validate_update_title(cls, value: Optional[str]) -> Optional[str]:
         if value is None:
-            raise ValueError("title cannot be null")
-
+            return None
         value = value.strip()
-
         if not value:
             raise ValueError("title must not be blank")
-
         return value
 
     @field_validator("category")
     @classmethod
     def validate_update_category(cls, value: Optional[str]) -> Optional[str]:
         if value is None:
-            return "other"
-
+            return None
         value = value.strip()
-
         if not value:
             return "other"
-
         return value
