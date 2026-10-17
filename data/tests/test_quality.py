@@ -1,3 +1,4 @@
+import psycopg
 import pytest
 
 pytestmark = pytest.mark.data_qa
@@ -61,18 +62,50 @@ def test_data_qa_catches_negative_amounts(db_conn):
     Мутационный тест: проверяем, что слой данных (БД) отвергает отрицательные суммы.
     Мы намеренно пытаемся вставить 'грязные' данные в обход генератора.
     """
+    # ВАЖНО: все операции с «грязными» данными — в отдельном savepoint.
+    # Без него ошибка внутри открытой транзакции переводила её в aborted-состояние,
+    # и последующий SELECT падал с InFailedSqlTransaction вместо реальной проверки.
+    savepoint = db_conn.transaction()
+    savepoint.start()
+    try:
+        with db_conn.cursor() as cur:
+            # Ловим конкретное нарушение CHECK, а не Exception: широкий raises
+            # замаскировал бы любую другую ошибку (опечатку в SQL, потерю соединения)
+            # как «успешное отклонение грязных данных».
+            with pytest.raises(psycopg.errors.CheckViolation):
+                cur.execute(
+                    "INSERT INTO staging_expenses (title, amount_cents, category) "
+                    "VALUES ('Bad Data', -500, 'food');"
+                )
+    finally:
+        # Откатываем только эту «грязную» ветку, основная транзакция остаётся живой
+        savepoint.rollback()
+
+    # Дополнительная проверка: убеждаемся, что запись НЕ появилась в БД
     with db_conn.cursor() as cur:
-        # Пытаемся вставить данные, нарушающие CHECK constraint (amount_cents > 0)
-        # Теперь это гарантированно вызовет psycopg.errors.CheckViolation
-        with pytest.raises(Exception):
-            cur.execute(
-                "INSERT INTO staging_expenses (title, amount_cents, category) "
-                "VALUES ('Bad Data', -500, 'food');"
-            )
-        
-        # Гарантируем чистоту транзакции после ожидаемой ошибки
-        db_conn.rollback()
-        
-        # Дополнительная проверка: убеждаемся, что запись НЕ появилась в БД
         cur.execute("SELECT COUNT(*) FROM staging_expenses WHERE title = 'Bad Data';")
         assert cur.fetchone()[0] == 0, "Грязные данные не были отклонены или не откатились!"
+
+
+def test_schema_rejects_unknown_category(db_conn):
+    """
+    Мутационный тест consistency-контракта: staging принимает только категории из
+    фиксированного списка (как и витрина). Продуктовый API допускает произвольную
+    строку <= 30 символов, поэтому неизвестная категория должна отсекаться уровнем БД,
+    иначе ETL «молча» теряет агрегаты по таким категориям.
+    """
+    savepoint = db_conn.transaction()
+    savepoint.start()
+    try:
+        with db_conn.cursor() as cur:
+            with pytest.raises(psycopg.errors.CheckViolation):
+                cur.execute(
+                    "INSERT INTO staging_expenses (title, amount_cents, category) "
+                    "VALUES ('Bad Category', 100, 'crypto');"
+                )
+    finally:
+        savepoint.rollback()
+
+    with db_conn.cursor() as cur:
+        cur.execute("SELECT COUNT(*) FROM staging_expenses WHERE category = 'crypto';")
+        assert cur.fetchone()[0] == 0
