@@ -123,3 +123,34 @@ def test_amount_invalid_boundaries(
     )
 
     assert response.status_code == 422
+
+
+@pytest.mark.api
+@pytest.mark.negative
+def test_patch_with_null_category_returns_422(client, auth_headers, payload_factory):
+    """
+    Регрессионный тест для BUG-001.
+    Проверяем, что явная передача null в category при PATCH возвращает 422, 
+    а не вызывает IntegrityError (500).
+    """
+    # 1. Создаем расход
+    create_response = client.post(
+        "/api/expenses", 
+        json=payload_factory(category="food"), 
+        headers=auth_headers
+    )
+    expense_id = create_response.json()["id"]
+
+    # 2. Пытаемся обновить category на null
+    response = client.patch(
+        f"/api/expenses/{expense_id}",
+        json={"category": None},
+        headers=auth_headers,
+    )
+
+    # 3. Проверяем, что получили валидационную ошибку, а не 500
+    assert response.status_code == 422
+    
+    # Опционально: проверяем текст ошибки
+    details = response.json()["detail"]
+    assert any("category cannot be null" in str(err.get("msg", "")).lower() for err in details)

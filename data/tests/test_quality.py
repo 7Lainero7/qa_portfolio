@@ -58,21 +58,21 @@ def test_no_orphan_categories(db_conn):
 
 def test_data_qa_catches_negative_amounts(db_conn):
     """
-    Мутационный тест: намеренно вставляем 'грязные' данные и проверяем, 
-    что тест качества данных их обнаруживает.
+    Мутационный тест: проверяем, что слой данных (БД) отвергает отрицательные суммы.
+    Мы намеренно пытаемся вставить 'грязные' данные в обход генератора.
     """
     with db_conn.cursor() as cur:
-        # 1. Намеренно ломаем данные (обходим логику генератора)
-        cur.execute("INSERT INTO staging_expenses (title, amount_cents, category) VALUES ('Bad Data', -500, 'food');")
-        db_conn.commit()
+        # Пытаемся вставить данные, нарушающие CHECK constraint (amount_cents > 0)
+        # Это вызовет psycopg.errors.CheckViolation (или общую Exception)
+        with pytest.raises(Exception):
+            cur.execute(
+                "INSERT INTO staging_expenses (title, amount_cents, category) "
+                "VALUES ('Bad Data', -500, 'food');"
+            )
         
-        # 2. Проверяем, что наш тест качества это ловит
-        cur.execute("SELECT COUNT(*) FROM staging_expenses WHERE amount_cents < 0;")
-        negative_count = cur.fetchone()[0]
-        
-        # Мы ОЖИДАЕМ, что найдется хотя бы 1 отрицательная запись, 
-        # тем самым доказывая, что тест НЕ является тавтологией.
-        assert negative_count >= 1, "Тест не смог обнаружить намеренно вставленные отрицательные значения"
-        
-        # 3. Откатываем изменения, чтобы не ломать другие тесты
+        # Гарантируем чистоту транзакции после ожидаемой ошибки
         db_conn.rollback()
+        
+        # Дополнительная проверка: убеждаемся, что запись НЕ появилась в БД
+        cur.execute("SELECT COUNT(*) FROM staging_expenses WHERE title = 'Bad Data';")
+        assert cur.fetchone()[0] == 0, "Грязные данные не были отклонены или не откатились!"

@@ -28,10 +28,10 @@ export const ExpenseForm: React.FC<Props> = ({ onExpenseAdded }) => {
 
         setLoading(true);
         try {
-            const payload: CreateExpensePayload = {
-                title: title.trim(),
-                amount_cents: Math.round(parseFloat(amount) *100),
-                category: category.trim() || 'other',
+            const payload = {
+                title,
+                amount_cents: Math.round(parseFloat(amount) * 100),
+                category: category.trim() || "other",
             };
             await createExpense(payload);
             setTitle('');
@@ -59,13 +59,14 @@ export const ExpenseForm: React.FC<Props> = ({ onExpenseAdded }) => {
                     onChange={(e) => setTitle(e.target.value)}
                     style={inputStyle}
                 />
+                <label>Сумма (₽)</label>
                 <input
-                    data-testid="amount-input"
                     type="number"
-                    placeholder="Amount (cents)"
+                    placeholder="Например: 350"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    style={inputStyle}
+                    required
+                    min="1"
                 />
                 <input
                     data-testid="category-input"

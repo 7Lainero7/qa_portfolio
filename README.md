@@ -16,24 +16,17 @@
 
 ## Структура проекта
 
-```
+```text
 qa-portfolio/
-├── backend/          # Кит 1: API (FastAPI + pytest)
-│   ├── app/          # Сервис
-│   ├── tests/        # API-тесты
-│   └── requirements.txt
-├── frontend/         # Простой UI (Vite + React + TypeScript)
-├── e2e/              # Кит 2: UI E2E (Playwright + TypeScript)
-│   ├── pages/        # Page Object'ы
-│   ├── tests/        # Спеки
-│   └── playwright.config.ts
-├── data/             # Кит 3: Data QA (PostgreSQL + Faker)
-│   ├── schema.sql    # Схема БД
-│   ├── generator.py  # Генератор данных
-│   └── tests/        # Тесты качества данных
-├── docs/             # Документация (тест-кейсы, баг-репорты)
-└──  .github/          # GitHub Actions workflows
+├── backend/          # Кит 1: API (FastAPI + pytest, 90% coverage)
+├── frontend/         # Кит 2: UI (Vite + React + TypeScript)
+├── e2e/              # Кит 3: E2E (Playwright + POM)
+├── data/             # Кит 4: Data QA (Faker, ETL staging→mart, тесты целостности)
+├── docs/             # Тест-кейсы, баг-репорты и known issues
+├── .github/          # CI/CD workflows (Backend, E2E, Data QA)
+└── README.md
 ```
+
 
 ## Технологический стек
 
@@ -56,71 +49,49 @@ qa-portfolio/
 
 ## Быстрый старт
 
-### 1. Клонируй репозиторий
-
+### 1. Подготовка окружения
+Убедись, что PostgreSQL запущен локально.
 ```bash
 git clone https://github.com/7Lainero7/qa_portfolio.git
 cd qa_portfolio
 ```
 
-### 2. Настрой PostgreSQL
-
-Убедись, что PostgreSQL запущен локально.
-
-Создай файл `backend/.env` из `backend/.env.example`:
-
-```bash
-cp backend/.env.example backend/.env
-```
-
-Отредактируй `backend/.env`:
-
-```env
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-POSTGRES_DB=qa_portfolio
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=qwer
-
-API_KEY=test-key
-```
-
-### 3. Установи зависимости
-
+### 2. Backend & API Tests
 ```bash
 cd backend
-python -m venv .venv
-source .venv/bin/activate  # Linux/macOS
-# или
-.venv\Scripts\activate     # Windows
-
+cp .env.example .env  # Отредактируй POSTGRES_PASSWORD при необходимости
+python -m venv .venv && source .venv/bin/activate  # или .venv\Scripts\activate на Windows
 pip install -r requirements.txt
+pytest  # Запуск тестов с coverage
+uvicorn app.main:app --reload  # Запуск сервера на :8000
 ```
 
-### 4. Запусти сервис
 
+### 3. Frontend
 ```bash
-uvicorn app.main:app --reload
+cd frontend
+npm install
+cp .env.example .env  # Убедись, что VITE_API_URL указывает на http://127.0.0.1:8000
+npm run dev  # Запуск на :5173
 ```
 
-Сервис будет доступен на http://127.0.0.1:8000
 
-Swagger UI: http://127.0.0.1:8000/docs
-
-### 5. Запусти тесты
-
-Тесты используют отдельную базу `qa_portfolio_test`, которая создаётся автоматически.
-
+### 4. E2E Tests (Playwright)
+*Требует запущенного Backend (шаг 2)*
 ```bash
-pytest
+cd e2e
+npm install
+npx playwright install
+npx playwright test  # или npm run test:ui для интерактивного режима
 ```
 
-Или с фильтрами:
 
+### 5. Data QA Tests
+*Требует запущенного PostgreSQL. Тесты автоматически сгенерируют и мигрируют данные.*
 ```bash
-pytest -m smoke      # Только smoke-тесты
-pytest -m negative   # Только негативные сценарии
-pytest -m boundary   # Только граничные значения
+cd data
+pip install -r requirements.txt
+pytest -v -m data_qa
 ```
 
 ## API Endpoints
@@ -148,13 +119,11 @@ DELETE /api/expenses/{id}     # Удалить
 - Изоляция — каждый тест работает с чистой базой
 
 ## Планы развития
+- [ ] Интеграция с GitLab CI
+- [ ] Переход на Alembic для управления миграциями БД
+- [ ] Нагрузочное тестирование API (Locust)
+- [ ] Добавление E2E тестов на негативные сценарии UI (обработка ошибок сети)
 
-- [ ] Frontend (Vite + React + TypeScript)
-- [ ] Playwright E2E-тесты
-- [ ] Data QA (проверка качества данных)
-- [ ] GitLab CI workflow
-- [ ] Docker Compose для инфраструктуры
-- [ ] Документация (тест-кейсы, баг-репорты)
 
 ## Лицензия
 

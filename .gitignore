@@ -13,7 +13,6 @@ backend/app.db
 # IDE
 .idea/
 .vscode/
-g
 # Frontend / E2E 
 node_modules/
 playwright-report/
