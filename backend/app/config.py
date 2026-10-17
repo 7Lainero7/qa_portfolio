@@ -21,8 +21,13 @@ class Settings(BaseSettings):
     postgres_port: int = Field(default=5432, ge=1, le=65535)
     postgres_db: str = "qa_portfolio"
     postgres_user: str = "postgres"
-    postgres_password: str = "qwer"
+    # Пароль не хардкодим: без POSTGRES_PASSWORD в .env/ENV приложение
+    # упадёт с понятной ошибкой вместо тихого использования секрета из кода.
+    postgres_password: str = Field(..., description="POSTGRES_PASSWORD env/.env")
     api_key: str = "test-key"
+    # Флаг управления инфраструктурой при старте (см. lifespan в main.py).
+    # create_all остаётся как временное решение до перехода на Alembic.
+    auto_create_schema: bool = True
 
     @field_validator("postgres_db")
     @classmethod

@@ -1,9 +1,6 @@
-import os
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import text
-
-os.environ["POSTGRES_DB"] = "qa_portfolio_test"
 
 from app.config import settings
 from app.database import Base, engine, ensure_postgres_database_exists, SessionLocal
@@ -16,7 +13,17 @@ def prepare_test_database():
     Готовит тестовую базу один раз на всю сессию тестов.
     1. Создаёт базу, если её нет.
     2. Создаёт таблицы.
+
+    Конфигурация (POSTGRES_DB=qa_portfolio_test и т.д.) приходит из ENV —
+    см. backend.yml в CI и README для локального запуска. Мутация
+    os.environ до импортов приложения больше не нужна: pydantic-settings
+    читает ENV при создании Settings(), а ENV из CI/-shell имеет приоритет
+    над backend/.env.
     """
+    assert settings.postgres_db.endswith("_test"), (
+        f"Опасная конфигурация: тесты пойдут в базу '{settings.postgres_db}'. "
+        "Ожидается база с суффиксом *_test (POSTGRES_DB=qa_portfolio_test)."
+    )
     ensure_postgres_database_exists()
     Base.metadata.create_all(bind=engine)
     yield
@@ -25,17 +32,20 @@ def prepare_test_database():
 @pytest.fixture(autouse=True)
 def clean_expenses():
     """
-    Очищает таблицу expenses после каждого теста.
-    Так тесты не влияют друг на друга.
-    """
-    yield
+    Очищает таблицу expenses ПЕРЕД каждым тестом.
 
+    Очистка «до», а не «после», делает тесты устойчивыми к падению
+    предыдущего запуска: грязное состояние из прошлого раза гарантированно
+    будет удалено перед стартом нового теста.
+    """
     session = SessionLocal()
     try:
         session.execute(text("TRUNCATE TABLE expenses RESTART IDENTITY CASCADE"))
         session.commit()
     finally:
         session.close()
+
+    yield
 
 
 @pytest.fixture()

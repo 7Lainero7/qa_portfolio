@@ -127,30 +127,32 @@ def test_amount_invalid_boundaries(
 
 @pytest.mark.api
 @pytest.mark.negative
-def test_patch_with_null_category_returns_422(client, auth_headers, payload_factory):
+def test_patch_with_null_category_normalized_to_other(client, auth_headers, payload_factory):
     """
-    Регрессионный тест для BUG-001.
-    Проверяем, что явная передача null в category при PATCH возвращает 422, 
-    а не вызывает IntegrityError (500).
+    Регрессионный тест для BUG-001 (обновлённый контракт).
+
+    Исторически PATCH с category=null возвращал 422, а POST с null молча
+    нормализовался к "other" — расхождение контрактов. Теперь единое
+    поведение: явный null в PATCH трактуется как «сбросить к дефолтной
+    категории other» и НЕ приводит к IntegrityError (500), поскольку
+    колонка category в БД NOT NULL.
     """
-    # 1. Создаем расход
+    # 1. Создаем расход с явной категорией
     create_response = client.post(
-        "/api/expenses", 
-        json=payload_factory(category="food"), 
+        "/api/expenses",
+        json=payload_factory(category="food"),
         headers=auth_headers
     )
+    assert create_response.status_code == 201, create_response.text
     expense_id = create_response.json()["id"]
 
-    # 2. Пытаемся обновить category на null
+    # 2. Обновляем category на null — ожидаем корректную нормализацию, а не 500/422
     response = client.patch(
         f"/api/expenses/{expense_id}",
         json={"category": None},
         headers=auth_headers,
     )
 
-    # 3. Проверяем, что получили валидационную ошибку, а не 500
-    assert response.status_code == 422
-    
-    # Опционально: проверяем текст ошибки
-    details = response.json()["detail"]
-    assert any("category cannot be null" in str(err.get("msg", "")).lower() for err in details)
+    # 3. Проверяем: запрос успешен, категория стала "other"
+    assert response.status_code == 200, response.text
+    assert response.json()["category"] == "other"

@@ -20,16 +20,44 @@ print(f"Подключение к БД: {host}:{port}/{db}")
 fake = Faker('ru_RU')
 CATEGORIES = ["food", "transport", "entertainment", "utilities", "other"]
 
+
+def ensure_database_exists() -> None:
+    """
+    Создаёт целевую базу, если её нет (симметрично backend/app/database.py).
+
+    Без этого шага тесты Data QA падали с OperationalError, если база
+    (например, qa_portfolio_data_test в CI) ещё не существовала:
+    сервисный контейнер Postgres создаёт только POSTGRES_DB из своих ENV.
+    Подключение идёт к служебной базе 'postgres' в режиме AUTOCOMMIT.
+    """
+    admin_url = f"postgresql://{user}:{password}@{host}:{port}/postgres"
+    with psycopg.connect(admin_url, autocommit=True) as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", (db,))
+            if cur.fetchone() is None:
+                cur.execute(
+                    psycopg.sql.SQL("CREATE DATABASE {}").format(psycopg.sql.Identifier(db))
+                )
+
+
 def run_generator(num_records: int = 100):
-    print(f"Подключение к БД: {DB_URL.replace(os.getenv('POSTGRES_PASSWORD'), '***')}")
-    
+    # Пароль маскируем по значению переменной, а не через getenv:
+    # старый вариант DB_URL.replace(os.getenv(...), '***') печатал полный URL,
+    # если пароль пришёл из ENV, а .env содержал другое значение.
+    print(f"Подключение к БД: {DB_URL.replace(password, '***')}")
+
+    ensure_database_exists()
+
     with psycopg.connect(DB_URL) as conn:
         with conn.cursor() as cur:
             # 1. Создаём схему
             schema_path = Path(__file__).parent / "schema.sql"
             cur.execute(schema_path.read_text(encoding="utf-8"))
-            
+
             # 2. Генерируем и вставляем данные в staging
+            # Идемпотентность: схема пересоздаётся через DROP+CREATE, но при эволюции
+            # схемы без DROP дубликаты копятся и ломают reconcile-тесты — чистим явно.
+            cur.execute("TRUNCATE TABLE staging_expenses RESTART IDENTITY CASCADE")
             print(f"Генерация {num_records} записей в staging...")
             records_to_insert = [
                 (fake.sentence(nb_words=3)[:-1], fake.random_int(100, 50000), fake.random_element(CATEGORIES))

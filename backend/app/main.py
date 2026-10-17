@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .config import settings
 from .database import Base, engine, ensure_postgres_database_exists
 from .routes import router
 
@@ -12,13 +13,15 @@ async def lifespan(app: FastAPI):
     """
     Вызывается при старте приложения.
 
-    1. Проверяем, существует ли нужная база.
-    2. Если базы нет — создаём её.
-    3. Создаём таблицы.
+    Инфраструктурные действия (создание БД и таблиц) вынесены под флаг
+    AUTO_CREATE_SCHEMA по умолчанию включён для удобства локальной разработки.
+    В CI/тестах схема готовится фикстурами, а на «продакшн»-подобных
+    окружениях этот путь должен быть отключён в пользу миграций (Alembic).
     """
 
-    ensure_postgres_database_exists()
-    Base.metadata.create_all(bind=engine)
+    if settings.auto_create_schema:
+        ensure_postgres_database_exists()
+        Base.metadata.create_all(bind=engine)
 
     yield
 
