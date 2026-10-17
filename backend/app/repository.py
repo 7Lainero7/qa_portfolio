@@ -95,14 +95,17 @@ def delete_expense(
     Возвращает:
     - True, если удалили;
     - False, если объекта не было.
+
+    Реализация — один DELETE с проверкой rowcount, а не SELECT + DELETE.
+    Это закрывает race condition: при конкурентном удалении тот запрос,
+    который реально удалил строку, получит rowcount == 1, остальные — 0.
     """
 
-    expense = get_expense_by_id(db, expense_id)
-
-    if expense is None:
-        return False
-
-    db.delete(expense)
+    deleted_count = (
+        db.query(models.Expense)
+        .filter(models.Expense.id == expense_id)
+        .delete(synchronize_session=False)
+    )
     db.commit()
 
-    return True
+    return deleted_count == 1
