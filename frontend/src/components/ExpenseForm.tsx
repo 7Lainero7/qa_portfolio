@@ -61,12 +61,14 @@ export const ExpenseForm: React.FC<Props> = ({ onExpenseAdded }) => {
                 />
                 <label>Сумма (₽)</label>
                 <input
+                    data-testid="amount-input"
                     type="number"
                     placeholder="Например: 350"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     required
                     min="1"
+                    style={inputStyle}
                 />
                 <input
                     data-testid="category-input"
