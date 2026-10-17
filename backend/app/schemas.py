@@ -89,10 +89,11 @@ class ExpenseUpdate(BaseModel):
 
     @field_validator("category")
     @classmethod
-    def validate_update_category(cls, value: Optional[str]) -> Optional[str]:
-        # None и пустые строки нормализуем к "other" — колонка NOT NULL,
-        # поэтому прямой записи null в БД не будет (защита от 500 сохранена),
-        # но контракт единый для POST и PATCH (см. docs/known_issues.md).
+    def validate_update_category(cls, value: Optional[str]) -> str:
+        # None и пустые строки нормализуем к "other": колонка category NOT NULL,
+        # поэтому явный null больше не приводит к IntegrityError (500) на записи.
+        # Контракт единый для POST и PATCH (см. docs/known_issues.md, BUG-001):
+        # раньше PATCH с null возвращал 422, а POST с null молча становился "other".
         if value is None:
             return "other"
         value = value.strip()
