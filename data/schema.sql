@@ -2,11 +2,12 @@
 DROP TABLE IF EXISTS mart_expenses_by_category;
 DROP TABLE IF EXISTS staging_expenses;
 
--- 1. Staging: сырые данные (как будто пришли из внешней системы)
+-- 1. Staging: сырые данные
+-- ДОБАВЛЕНО: CHECK (amount_cents > 0) для защиты на уровне БД
 CREATE TABLE staging_expenses (
     id SERIAL PRIMARY KEY,
     title VARCHAR(100),
-    amount_cents BIGINT,
+    amount_cents BIGINT CHECK (amount_cents > 0),
     category VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

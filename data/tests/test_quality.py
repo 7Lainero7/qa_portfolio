@@ -63,7 +63,7 @@ def test_data_qa_catches_negative_amounts(db_conn):
     """
     with db_conn.cursor() as cur:
         # Пытаемся вставить данные, нарушающие CHECK constraint (amount_cents > 0)
-        # Это вызовет psycopg.errors.CheckViolation (или общую Exception)
+        # Теперь это гарантированно вызовет psycopg.errors.CheckViolation
         with pytest.raises(Exception):
             cur.execute(
                 "INSERT INTO staging_expenses (title, amount_cents, category) "
