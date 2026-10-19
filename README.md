@@ -1,8 +1,8 @@
 # QA Automation Portfolio
 
-[![Backend CI](https://github.com/<твой-логин>/qa_portfolio/actions/workflows/backend.yml/badge.svg)](https://github.com/<твой-логин>/qa_portfolio/actions/workflows/backend.yml)
-[![E2E CI](https://github.com/<твой-логин>/qa_portfolio/actions/workflows/e2e.yml/badge.svg)](https://github.com/<твой-логин>/qa_portfolio/actions/workflows/e2e.yml)
-[![Data QA CI](https://github.com/<твой-логин>/qa_portfolio/actions/workflows/data-qa.yml/badge.svg)](https://github.com/<твой-логин>/qa_portfolio/actions/workflows/data-qa.yml)
+[![Backend CI](https://github.com/7Lainero7/qa_portfolio/actions/workflows/backend.yml/badge.svg)](https://github.com/<твой-логин>/qa_portfolio/actions/workflows/backend.yml)
+[![E2E CI](https://github.com/7Lainero7/qa_portfolio/actions/workflows/e2e.yml/badge.svg)](https://github.com/<твой-логин>/qa_portfolio/actions/workflows/e2e.yml)
+[![Data QA CI](https://github.com/7Lainero7/qa_portfolio/actions/workflows/data-qa.yml/badge.svg)](https://github.com/<твой-логин>/qa_portfolio/actions/workflows/data-qa.yml)
 Пет-проект по автоматизации тестирования для портфолио AQA-инженера.
 
 ## Цель
