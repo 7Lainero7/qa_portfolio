@@ -1,4 +1,5 @@
 import os
+import re
 from pathlib import Path
 from dotenv import load_dotenv
 import psycopg
@@ -44,7 +45,12 @@ def run_generator(num_records: int = 100):
     # Пароль маскируем по значению переменной, а не через getenv:
     # старый вариант DB_URL.replace(os.getenv(...), '***') печатал полный URL,
     # если пароль пришёл из ENV, а .env содержал другое значение.
-    print(f"Подключение к БД: {DB_URL.replace(password, '***')}")
+    masked_url = (
+        DB_URL.replace(password, "***")
+        if password
+        else re.sub(r"://([^:/]+):[^@]*@", r"://\1:***@", DB_URL)
+    )
+    print(f"Подключение к БД: {masked_url}")
 
     ensure_database_exists()
 

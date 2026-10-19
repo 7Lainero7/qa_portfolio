@@ -1,5 +1,12 @@
 # Known Issues & Design Decisions
 
+## ✅ RESOLVED: В UI не было обработки ошибок API — E2E-тесты падали по таймауту вместо проверки сообщения об ошибке
+**История:**
+`frontend/src/api.ts` при 401/422/500 показывал `alert()` и бросал исключение, но в компонентах ошибка не отображалась в DOM — не было элемента с `data-testid="error-message"`, поэтому написать E2E-тест на негативные сценарии UI было невозможно.
+**Решение:** `alert()` убран, добавлен класс `ApiError` с человекочитаемыми сообщениями; `App.tsx` и `ExpenseForm.tsx` рендерят ошибку в `<div data-testid="error-message">`. Добавлены негативные E2E-тесты: `e2e/tests/negative.spec.ts` (клиентская валидация + перехват 422/500 через `page.route`).
+
+---
+
 ## ✅ RESOLVED: PATCH с `{"category": null}` вызывал 500 Internal Server Error
 **История:** При передаче `null` валидатор пропускал значение, и SQLAlchemy пыталась записать `NULL` в колонку `NOT NULL`, вызывая `IntegrityError`.  
 **Решение:** В `schemas.py` добавлена явная проверка: `if value is None: raise ValueError(...)`. Теперь API корректно возвращает `422 Unprocessable Entity`.

@@ -1,18 +1,22 @@
 import { test, expect } from "./fixtures";
 
+// Конфигурация через переменные окружения (см. e2e/.env.example)
+const API_URL = process.env.E2E_API_URL ?? "http://127.0.0.1:8000";
+const API_KEY = process.env.E2E_API_KEY ?? "test-key";
+
 test.describe("расходы", () => {
   // Очищаем базу перед каждым тестом через API
   test.beforeEach(async ({ expensesPage, request }) => {
     // 1. Делаем запрос к API, чтобы получить все текущие расходы
-    const response = await request.get("http://127.0.0.1:8000/api/expenses", {
-      headers: { "X-API-Key": "test-key" },
+    const response = await request.get(`${API_URL}/api/expenses`, {
+      headers: { "X-API-Key": API_KEY },
     });
     const expenses = await response.json();
 
     // 2. Удаляем каждый расход по ID
     for (const expense of expenses) {
-      await request.delete(`http://127.0.0.1:8000/api/expenses/${expense.id}`, {
-        headers: { "X-API-Key": "test-key" },
+      await request.delete(`${API_URL}/api/expenses/${expense.id}`, {
+        headers: { "X-API-Key": API_KEY },
       });
     }
 

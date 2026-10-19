@@ -1,8 +1,8 @@
 # QA Automation Portfolio
 
-[![Backend CI](https://github.com/7Lainero7/qa_portfolio/actions/workflows/backend.yml/badge.svg)](https://github.com/7Lainero7/qa_portfolio/actions/workflows/backend.yml)
-[![E2E CI](https://github.com/7Lainero7/qa_portfolio/actions/workflows/e2e.yml/badge.svg)](https://github.com/7Lainero7/qa_portfolio/actions/workflows/e2e.yml)
-[![Data QA CI](https://github.com/7Lainero7/qa_portfolio/actions/workflows/data-qa.yml/badge.svg)](https://github.com/7Lainero7/qa_portfolio/actions/workflows/data-qa.yml)
+[![Backend CI](https://github.com/<твой-логин>/qa_portfolio/actions/workflows/backend.yml/badge.svg)](https://github.com/<твой-логин>/qa_portfolio/actions/workflows/backend.yml)
+[![E2E CI](https://github.com/<твой-логин>/qa_portfolio/actions/workflows/e2e.yml/badge.svg)](https://github.com/<твой-логин>/qa_portfolio/actions/workflows/e2e.yml)
+[![Data QA CI](https://github.com/<твой-логин>/qa_portfolio/actions/workflows/data-qa.yml/badge.svg)](https://github.com/<твой-логин>/qa_portfolio/actions/workflows/data-qa.yml)
 Пет-проект по автоматизации тестирования для портфолио AQA-инженера.
 
 ## Цель
@@ -12,12 +12,12 @@
 - API-тестирование (Python + pytest)
 - UI E2E-тестирование (Playwright + TypeScript)
 - Data QA (проверка качества данных, миграций, целостности)
-- CI/CD (GitHub Actions + GitLab CI)
+- CI/CD (GitHub Actions)
 
 ## Структура проекта
 
 ```text
-qa-portfolio/
+qa_portfolio/
 ├── backend/          # Кит 1: API (FastAPI + pytest, 90% coverage)
 ├── frontend/         # Кит 2: UI (Vite + React + TypeScript)
 ├── e2e/              # Кит 3: E2E (Playwright + POM)
@@ -36,23 +36,25 @@ qa-portfolio/
 - SQLAlchemy + PostgreSQL
 - pydantic-settings (конфигурация)
 
+### Frontend
+- Vite + React 18 + TypeScript
+- Обработка ошибок API с рендером сообщений в DOM (`data-testid="error-message"`)
+
+### E2E
+- Playwright Test (TypeScript)
+- Page Object Model + кастомные фикстуры
+- Негативные UI-сценарии с перехватом сети (`page.route`)
+- Конфигурация через переменные окружения (`e2e/.env.example`)
+
 ### CI/CD
 - GitHub Actions (основной CI)
-
-## Планы развития
-
-- [ ] Интеграция с GitLab CI
-- [ ] Переход на Alembic для управления миграциями БД вместо `create_all`
-- [ ] Нагрузочное тестирование API (Locust)
-- [ ] Добавление e2e тестов на негативные сценарии UI (обработка ошибок сети)
-
 
 ## Быстрый старт
 
 ### 1. Подготовка окружения
 Убедись, что PostgreSQL запущен локально.
 ```bash
-git clone https://github.com/7Lainero7/qa_portfolio.git
+git clone https://github.com/<твой-логин>/qa_portfolio.git
 cd qa_portfolio
 ```
 
@@ -90,8 +92,13 @@ npx playwright test  # или npm run test:ui для интерактивног�
 *Требует запущенного PostgreSQL. Тесты автоматически сгенерируют и мигрируют данные.*
 ```bash
 cd data
+# Конфигурация берётся из ENV или backend/.env (POSTGRES_* переменные) —
+# отдельный .env в data/ не нужен.
 pip install -r requirements.txt
-pytest -v -m data_qa
+# ВАЖНО: запускай на изолированной базе (например, qa_portfolio_data_test):
+# генератор делает DROP TABLE по своей схеме. Если POSTGRES_DB=qa_portfolio,
+# тесты будут пропущены с понятным сообщением.
+POSTGRES_DB=qa_portfolio_data_test pytest -v -m data_qa
 ```
 
 ## API Endpoints
@@ -117,12 +124,22 @@ DELETE /api/expenses/{id}     # Удалить
 - Negative-тесты — ошибки авторизации (401), отсутствующие ресурсы (404), невалидные данные (422)
 - Boundary-тесты — граничные значения через `parametrize`
 - Изоляция — каждый тест работает с чистой базой
+- Порог coverage — `--cov-fail-under=90` в `backend/pytest.ini`: CI падает, если покрытие API ниже 90%
+- E2E негативные сценарии UI (`e2e/tests/negative.spec.ts`) — клиентская валидация и ошибки API (422/500), отображаемые в DOM
+
+## Known Issues
+
+Открытые проблемы и принятые дизайн-решения задокументированы в [docs/known_issues.md](docs/known_issues.md).
+
+## Тест-кейсы
+
+Примеры формализованных тест-кейсов (API создания расхода) — в [docs/test_cases.md](docs/test_cases.md).
 
 ## Планы развития
-- [ ] Интеграция с GitLab CI
+
+- [x] Добавление E2E тестов на негативные сценарии UI (обработка ошибок API в DOM)
 - [ ] Переход на Alembic для управления миграциями БД
 - [ ] Нагрузочное тестирование API (Locust)
-- [ ] Добавление E2E тестов на негативные сценарии UI (обработка ошибок сети)
 
 
 ## Лицензия
