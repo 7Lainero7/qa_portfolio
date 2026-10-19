@@ -11,18 +11,20 @@ export const ExpenseForm: React.FC<Props> = ({ onExpenseAdded }) => {
     const [amount, setAmount] = useState('');
     const [category, setCategory] = useState('');
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError(null);
 
         // Клиентская валидация
         if (!title.trim()) {
-            alert('Title не может быть пустым');
+            setError('Title не может быть пустым');
             return;
         }
         const amountNum = Number(amount);
         if (isNaN(amountNum) || amountNum <= 0) {
-            alert('Amount должен быть больше 0');
+            setError('Amount должен быть больше 0');
             return;
         }
 
@@ -39,7 +41,7 @@ export const ExpenseForm: React.FC<Props> = ({ onExpenseAdded }) => {
             setCategory('');
             onExpenseAdded();
         } catch (err) {
-            // Ошибка уже обработана в api.ts (alert)
+            setError(err instanceof Error ? err.message : 'Неизвестная ошибка');
             console.error(err);
         } finally {
             setLoading(false);
@@ -87,6 +89,11 @@ export const ExpenseForm: React.FC<Props> = ({ onExpenseAdded }) => {
                     {loading ? 'Adding...' : 'Add'}
                 </button>
             </div>
+            {error && (
+                <div data-testid="error-message" role="alert" style={{ color: 'red', marginTop: '10px' }}>
+                    {error}
+                </div>
+            )}
         </form>
     );
 };

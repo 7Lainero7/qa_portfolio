@@ -8,6 +8,7 @@ export class ExpensesPage {
   readonly addButton: Locator;
   readonly expenseList: Locator;
   readonly expenseRows: Locator;
+  readonly errorMessage: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -17,11 +18,18 @@ export class ExpensesPage {
     this.addButton = page.getByTestId("add-button");
     this.expenseList = page.getByTestId("expense-list");
     this.expenseRows = page.getByTestId("expense-row");
+    this.errorMessage = page.getByTestId("error-message");
   }
 
   async goto() {
     await this.page.goto("/");
     await this.expenseList.waitFor({ state: "visible" });
+  }
+
+  async submitWithInvalidAmount(amount: string) {
+    await this.titleInput.fill(`Invalid ${Date.now()}`);
+    await this.amountInput.fill(amount);
+    await this.addButton.click();
   }
 
   async addExpense(title: string, amountCents: number, category?: string) {

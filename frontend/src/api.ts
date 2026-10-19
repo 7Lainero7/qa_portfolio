@@ -8,12 +8,27 @@ const HEADERS = {
   'X-API-Key': API_KEY,
 };
 
+export class ApiError extends Error {
+  status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
+const humanizeError = (status: number, statusText: string): string => {
+  if (status === 401) return 'Ошибка авторизации: неверный API-ключ (401)';
+  if (status === 404) return 'Ресурс не найден (404)';
+  if (status === 422) return 'Невалидные данные запроса (422)';
+  if (status >= 500) return `Ошибка сервера (${status})`;
+  return `Ошибка: ${status} ${statusText}`.trim();
+};
+
 const handleResponse = async (res: Response) => {
   if (!res.ok) {
-    if (res.status === 401 || res.status === 422 || res.status === 500) {
-      alert(`Ошибка: ${res.status} ${res.statusText}`);
-    }
-    throw new Error(`HTTP error! status: ${res.status}`);
+    throw new ApiError(res.status, humanizeError(res.status, res.statusText));
   }
   return res;
 };
